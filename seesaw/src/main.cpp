@@ -11,8 +11,8 @@ int startVal (0); //start button value
 int limitPinOne (6); //limit switch pin
 int limitValOne (0);
 int limitPinTwo (7); //other limit switch
-int limitValTwo (0);
-
+int limitValTwo (0); 
+int speed;  
 //A class created to control the speed of the servo without cluttering the loop or using delay.
 class servoControl
 {
@@ -20,11 +20,12 @@ class servoControl
   
   int pos; // current servo position 
   int increment; // increment to move for each interval
+  
   unsigned int updateInterval; // the value used to determine how often the script updates the servo pos
   unsigned long lastUpdate; // last update of servo pos (millis)
-  
+
   public: //parts of the class that the rest of the script can see
-    
+ 
   servoControl(int interval) //class function that allows us to set the speed of the servoControl class
   {
     updateInterval = interval;
@@ -34,29 +35,26 @@ class servoControl
   {
     servo.attach (pin); //tells the code to expect the pin number of the servo
   }
-  
+  void dialUpdate(int speed)
+  {
+    updateInterval = speed;
+  }
+ 
 //a function timer using the millis function so we don't have to use delays and hold up the system
 // otherwise the inputs won't work while the seesaw is going.
   void Update() 
   {
     if((millis() - lastUpdate) > updateInterval)  // compares time minus last update to the update interval
     {
-        pos += increment; //add position of servo plus the increment value we want the servo to rotate
+        (pos) += increment;
         servo.write(pos); //send the new position to the servo
         lastUpdate = millis(); //sets the lastUpdate value to the current millis clock
-        if (limitValOne == LOW) // if the servo is at one limit or the other...
-        {
-        increment = -increment;// ...reverse direction
-        }   
-        if (limitValTwo == LOW) // if the servo is at one limit or the other...
-        {
-        increment = -increment;// ...reverse direction
-        } 
+        
     }    
   }
 };
 
-servoControl seesaw(dialVal/5); //make a new object called seesaw based on the servoControl class
+servoControl seesaw(speed); //make a new object called seesaw based on the servoControl class
 
 void setup()
 { 
@@ -85,6 +83,7 @@ void readButtons()
 void loop()
 {
   readButtons();
+  seesaw.dialUpdate(dialVal);
   seesaw.Update(); //tells the seesaw object to run the update function
   Serial.println (dialVal);
 }
