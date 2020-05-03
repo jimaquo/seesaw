@@ -29,7 +29,7 @@ public: //parts of the class that the rest of the script can see
  
 servoControl(int interval) //class function that allows us to set the speed of the servoControl class
   {
-    increment = 1;
+    increment = 2;
     updateInterval = interval;
   }
 void attach(int pin) //class function so we can attach more servos with less code later.
@@ -53,9 +53,19 @@ void Update()
       Serial.println(pos);
      
       if ((pos<=0) || (pos>=180)) // end of sweep
-    
+        {
         // reverse direction
         increment = -increment;
+        }
+
+      if (stopVal==LOW)
+        {
+          increment=0;
+        }
+      if (startVal==LOW)
+        {
+          increment=1;
+        }
     }
   }
 };
@@ -92,7 +102,7 @@ void loop()
 {
   
   readButtons();
-  seesaw.dialUpdate(dialVal/300);
+  seesaw.dialUpdate(dialVal/500);
   seesaw.Update(); //tells the seesaw object to run the update function
   Serial.println (dialVal);
 }
