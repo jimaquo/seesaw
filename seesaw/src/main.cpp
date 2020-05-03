@@ -1,61 +1,65 @@
 #include <Arduino.h> // add the Arduino library
 #include <Servo.h> // add the Servo library
 
-//Global values that can bee sen by the entire program
+//Global values that can be seen by the entire program
 int dialPin (A1); // speed control varistor pin
-float dialVal (0);
+int dialVal (0); //analog vlaue of the varister between 0 and 1023
 int stopPin (4); // stop button pin
 int stopVal (0); // stop button value
 int startPin (5); //start button pin
 int startVal (0); //start button value
 int limitPinOne (6); //limit switch pin
-int limitValOne (0); //limit switch one value
 int limitPinTwo (7); //other limit switch
-int limitValTwo (0); //limit switch two's value
 
-//A class created to control the speed of the servo without cluttering the loop.
-class Sweeper
+//A class created to control the speed of the servo without cluttering the loop or using delay.
+class servoControl
 {
   Servo servo;              // the servo
   
   int pos;              // current servo position 
   int increment;        // increment to move for each interval
-  int  updateInterval;      // interval between updates
-  unsigned long lastUpdate; // last update of position
+  unsigned int updateInterval;      // the value used to determine how often the script updates the servo pos
+  unsigned long lastUpdate; // last update of servo pos (millis)
   
-public: 
-  Sweeper(float interval)
+  public: //parts of the class that the rest of the script can see
+    
+  servoControl(int interval) //class function that allows us to set the speed of the servoControl class
   {
     updateInterval = interval;
     increment = 1;
   }
-  void attach(int pin)
+  void attach(int pin) //class function so we can attach more servos with less code later.
   {
-    servo.attach (pin);
+    servo.attach (pin); //tells the code to expect the pin number of the servo
   }
-  
-  void Update()
+  void Update() //a function timer using the millis function so we don't have to use delays and hold up the system
+                // otherwise the inputs won't work while the seesaw is going.
   {
-    if((millis() - lastUpdate) > updateInterval)  // time to update
+    if((millis() - lastUpdate) > updateInterval)  // if the current millis time minus the last servo pos update is greater
+                                                  //than the update interval (controlled by the dial value)
     {
-      lastUpdate = millis();
-      pos += increment;
-      servo.write(pos);
-      if ((pos >= 180) || (pos <= 0)) // end of sweep
+      lastUpdate = millis(); //sets the lastUpdate value to the current millis clock
+      pos += increment; //add position of servo plus the increment vlaue we want the servo to rotate
+      servo.write(pos); //send the new position to the servo
+      int limitValOne = digitalRead (limitPinOne); //checks if a limit is reached
+      int limitValTwo = digitalRead (limitPinTwo);
+      if (limitValOne == LOW) // if the servo is at one limit or the other...
       {
-        // reverse direction
-        increment = -increment;
+        increment = -increment;// ...reverse direction
       }
+        if (limitValTwo == LOW) // if the servo is at one limit or the other...
+      {
+        increment = -increment;// ...reverse direction
     }
   }
 };
 
-Sweeper speedcontrol(dialVal/5);
+servoControl seesaw(dialVal); //make a new object called seesaw based on the servoControl class
 
 void setup()
 { 
-  speedcontrol.attach(3);
-  Serial.begin (9600); //turn on serial output
+  seesaw.attach(3); //tell the code that the servo object called seesaw is hooked up to pin 3
+  Serial.begin (9600); //turn on serial output for testing
   pinMode (dialPin,INPUT); //set the dial pin as an input
   pinMode (stopPin,INPUT_PULLUP); //set the stop pin as an input with the pullup resistors on
   digitalWrite (stopPin,HIGH); //set the stop pin to a high state
@@ -67,15 +71,12 @@ void setup()
   digitalWrite (limitPinTwo,HIGH); //set pin high
 }
 
-
-
 void loop()
 {
-  startVal = digitalRead (startPin);
-  stopVal = digitalRead(stopPin);
-  dialVal = analogRead(dialPin);
-  limitValOne = digitalRead (limitPinOne);
-  limitValTwo = digitalRead (limitPinTwo);
-  speedcontrol.Update;
+  startVal = digitalRead (startPin); //checks if the start button is pushed
+  stopVal = digitalRead(stopPin); //Checks if the stop button is pushed
+  dialVal = analogRead(dialPin); //checks the dial value between 0 and 1023
+ //checks if the other limit is reached
+  seesaw.Update(); //tells the seesaw object to run the update function
   Serial.println (dialVal);
 }
