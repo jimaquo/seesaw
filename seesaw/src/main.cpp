@@ -9,16 +9,18 @@ int stopVal (0); // stop button value
 int startPin (5); //start button pin
 int startVal (0); //start button value
 int limitPinOne (6); //limit switch pin
+int limitValOne (0);
 int limitPinTwo (7); //other limit switch
+int limitValTwo (0);
 
 //A class created to control the speed of the servo without cluttering the loop or using delay.
 class servoControl
 {
   Servo servo;              // the servo
   
-  int pos;              // current servo position 
-  int increment;        // increment to move for each interval
-  unsigned int updateInterval;      // the value used to determine how often the script updates the servo pos
+  int pos; // current servo position 
+  int increment; // increment to move for each interval
+  unsigned int updateInterval; // the value used to determine how often the script updates the servo pos
   unsigned long lastUpdate; // last update of servo pos (millis)
   
   public: //parts of the class that the rest of the script can see
@@ -32,29 +34,29 @@ class servoControl
   {
     servo.attach (pin); //tells the code to expect the pin number of the servo
   }
-  void Update() //a function timer using the millis function so we don't have to use delays and hold up the system
-                // otherwise the inputs won't work while the seesaw is going.
+  
+//a function timer using the millis function so we don't have to use delays and hold up the system
+// otherwise the inputs won't work while the seesaw is going.
+  void Update() 
   {
-    if((millis() - lastUpdate) > updateInterval)  // if the current millis time minus the last servo pos update is greater
-                                                  //than the update interval (controlled by the dial value)
+    if((millis() - lastUpdate) > updateInterval)  // compares time minus last update to the update interval
     {
-      lastUpdate = millis(); //sets the lastUpdate value to the current millis clock
-      pos += increment; //add position of servo plus the increment vlaue we want the servo to rotate
-      servo.write(pos); //send the new position to the servo
-      int limitValOne = digitalRead (limitPinOne); //checks if a limit is reached
-      int limitValTwo = digitalRead (limitPinTwo);
-      if (limitValOne == LOW) // if the servo is at one limit or the other...
-      {
+        pos += increment; //add position of servo plus the increment value we want the servo to rotate
+        servo.write(pos); //send the new position to the servo
+        lastUpdate = millis(); //sets the lastUpdate value to the current millis clock
+        if (limitValOne == LOW) // if the servo is at one limit or the other...
+        {
         increment = -increment;// ...reverse direction
-      }
+        }   
         if (limitValTwo == LOW) // if the servo is at one limit or the other...
-      {
+        {
         increment = -increment;// ...reverse direction
-    }
+        } 
+    }    
   }
 };
 
-servoControl seesaw(dialVal); //make a new object called seesaw based on the servoControl class
+servoControl seesaw(dialVal/5); //make a new object called seesaw based on the servoControl class
 
 void setup()
 { 
@@ -71,12 +73,18 @@ void setup()
   digitalWrite (limitPinTwo,HIGH); //set pin high
 }
 
-void loop()
+void readButtons()
 {
   startVal = digitalRead (startPin); //checks if the start button is pushed
   stopVal = digitalRead(stopPin); //Checks if the stop button is pushed
-  dialVal = analogRead(dialPin); //checks the dial value between 0 and 1023
- //checks if the other limit is reached
+  dialVal = analogRead(dialPin); //checks the dial value between 0 and 1023      
+  limitValOne = digitalRead (limitPinOne); //checks if a limit is reached
+  limitValTwo = digitalRead (limitPinTwo);
+}
+
+void loop()
+{
+  readButtons();
   seesaw.Update(); //tells the seesaw object to run the update function
   Serial.println (dialVal);
 }
